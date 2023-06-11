@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "express": "^4.18.2",
+    "node": "^20.2.0"
+  },
+  "name": "file_server_project_amal",
+  "version": "1.0.0",
+  "devDependencies": {},
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Asante-Nsiah/File_server_project_amal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Asante-Nsiah/File_server_project_amal/issues"
+  },
+  "homepage": "https://github.com/Asante-Nsiah/File_server_project_amal#readme",
+  "description": ""
+}
