@@ -10,6 +10,23 @@
 <body>
     <div class="container">
         <h2>Login</h2>
+        <ul>
+            <% if (typeof errors != 'undefined') { %> <% errors.forEach(error => { %>
+            <li><%= error.message %></li>
+            <% }) %> <% } %>
+          </ul>
+      
+          <ul>
+            <% if(messages.success_msg) { %>
+            <li><%= messages.success_msg %></li>
+            <% } %>
+          </ul>
+      
+          <ul>
+            <% if (messages.error) { %>
+            <li><%= messages.error %></li>
+            <% } %>
+          </ul>
         <form method="POST" action="/login">
           <label for="email">Email:</label>
           <input type="text" id="email" name="email" required>
@@ -19,6 +36,8 @@
           
           <input type="submit" value="Login">
         </form>
+        <p>Don't have an account? <a href="/signup">Sign up</a></p>
+      <p>Forgot your password? <a href="/reset-password">Reset password</a></p>
       </div>
 </body>
 </html>

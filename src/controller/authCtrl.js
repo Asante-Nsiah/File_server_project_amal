@@ -37,11 +37,12 @@ exports.signup = async (req, res) => {
     console.log(hashedPassword);
     
       // check if the email already exists
-      let existingUser = await authModel.findEmail(email)
-      if(existingUser.rows > 1) {
-        console.log('email exists');
-        return res.render("signup", {message: "Email already registered"});
-      }
+      let existingUser = await authModel.findEmail(email);
+if (existingUser.rows.length > 0) {
+  console.log('Email exists');
+  req.flash('error', 'Email already registered');
+  return res.redirect('/signup');
+}
     
       let createdUser = await authModel.createUser(email, hashedPassword)
       if(createdUser.rows){
@@ -51,10 +52,15 @@ exports.signup = async (req, res) => {
       
     
       // Generate verification token
+     
+      
       const token = jwt.sign({ email }, 'secret', { expiresIn: '1h' });
-      console.log(`This is the token :${token}`);
-    
-    
+      
+      let verification = await authModel.storeToken(token);
+      if (verification) {
+        console.log(`This is the token: ${token}`);
+      }
+      
       // Create email transport and send verification email
       const transporter = nodemailer.createTransport({
         pool: true,
