@@ -2,13 +2,28 @@ require('dotenv').config();
 
 const express = require('express');
 const port = process.env.PORT || 8000;
-const pool = require('./db');
 const routes = require('./route/routing');
 const path = require('path');
+const flash = require('express-flash');
+const session = require('express-session');
+const passport = require('passport');
 
 
 const app = express();
 
+const initializePassport = require('./controller/passport-config');
+initializePassport(passport);
+
+app.use(flash())
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'defaultSecret',
+    resave: false,
+    saveUninitialized: false
+}))
+
+
+app.use(passport.initialize())
+app.use(passport.session())
 app.use(express.json()); // Used to parse JSON bodies
 app.use(express.urlencoded()); //Parse URL-encoded bodies
 app.use(routes)
