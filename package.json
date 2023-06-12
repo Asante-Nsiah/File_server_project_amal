@@ -1,8 +1,10 @@
 {
   "dependencies": {
     "dotenv": "^16.1.4",
+    "ejs": "^3.1.9",
     "express": "^4.18.2",
     "node": "^20.2.0",
+    "path": "^0.12.7",
     "pg": "^8.11.0"
   },
   "name": "file_server_project_amal",
