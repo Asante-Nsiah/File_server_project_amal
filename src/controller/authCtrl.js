@@ -86,10 +86,11 @@ if (existingUser.rows.length > 0) {
       try {
         await transporter.sendMail(mailOptions);
     
-        const insertQuery = 'INSERT INTO users (email, password, is_verified) VALUES ($1, $2, $3)';
+        const insertQuery = 'INSERT INTO users (email, password, is_verified, verification_token) VALUES ($1, $2, $3, $4)';
         const insertValues = [email, password, false];
         await pool.query(insertQuery, insertValues);
         res.send('Verification email sent!');
+        console.log(`This is the token: ${token}`);
       } catch (error) {
         console.error(error);
         res.status(500).send('Failed to send verification email');
@@ -142,3 +143,39 @@ exports.login = async (req, res) => {
   res.render("login");
 
 };
+exports.loginAccount = async (req, res, next) => {
+    const authenticatedUser = passport.authenticate('local', (err, user, info) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+    
+        if (!user) {
+          return res.status(401).json({ message: 'Invalid credentials' });
+        }
+    
+        req.session.user = {
+          email: user.email,
+        };
+    
+        // Check if the email matches the admin email
+        if (user.email === 'demoproject369@gmail.com') {
+          // Redirect to the admin page
+          return res.redirect('/admin-dashboard');
+        }
+    
+        // Redirect to the dashboard
+        return res.redirect('/user-dashboard');
+      })(req, res, next);
+
+};
+
+exports.dashboardUser = async (req, res) => {
+    res.render("user-dashboard");
+  
+  };
+
+exports.dashboardAdmin = async (req, res) => {
+    res.render("admin-dashboard");
+  
+  };
