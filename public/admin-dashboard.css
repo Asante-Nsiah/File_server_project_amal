@@ -1,0 +1,22 @@
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #eaf9ea;
+  }
+  h1 {
+    color: #006400;
+  }
+  .file-upload {
+    margin-bottom: 10px;
+  }
+  .file-info {
+    margin-bottom: 10px;
+  }
+  .downloads-info {
+    margin-bottom: 10px;
+    color: #006400;
+  }
+  .email-info {
+    color: #006400;
+  }

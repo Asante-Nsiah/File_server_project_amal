@@ -1,5 +1,6 @@
 const express = require('express');
 const auth = require('../controller/authCtrl');
+const authFile = require('../middlewave/fileserver') 
 
 
 
@@ -16,6 +17,9 @@ router.post('/request-resetPd', auth.requestPd)
 router.get('/request-resetPd', auth.requestPd) 
 router.get('/reset-password/:token', auth.forgetPassword)
 router.get('/reset-password', auth.resetPassword)
+router.post('/upload', authFile.uploadFile)
+router.get('/upload',  authFile.uploadFile)
+router.get('/admin-dashboard', authFile.displayAdminFiles)
 
 
 
