@@ -14,9 +14,9 @@ exports.createUser = async (email, hashedPassword) => {
 }
 exports.storeToken = async (token) => {
     try {
-      const sql = `INSERT INTO tokens (token) VALUES ($1) RETURNING *`;
+      const sql = `INSERT INTO users (verification_token) VALUES ($1) RETURNING *`;
       const result = await pool.query(sql, [token]);
-      return result.rows[0];
+      return result.rows[1];
     } catch (error) {
       console.error('Error storing token:', error);
       return null;

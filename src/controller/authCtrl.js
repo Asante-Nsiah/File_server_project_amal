@@ -51,17 +51,14 @@ if (existingUser.rows.length > 0) {
       }
       
     
-      // Generate verification token
-     
-      
-      const token = jwt.sign({ email }, 'secret', { expiresIn: '1h' });
-      
-      let verification = await authModel.storeToken(token);
-      if (verification) {
+      // Generate verification tok en
+      const token = jwt.sign({ email }, 'secret', { expiresIn: 1000 * 60 * 60 }); // 1 hour
+
+        const verification = await authModel.storeToken(token);
+        if (verification) {
         console.log(`This is the token: ${token}`);
-      }
-      
-      // Create email transport and send verification email
+        }
+            // Create email transport and send verification email
       const transporter = nodemailer.createTransport({
         pool: true,
         host: "smtp.gmail.com",
@@ -144,29 +141,34 @@ exports.login = async (req, res) => {
 
 };
 exports.loginAccount = async (req, res, next) => {
-    const authenticatedUser = passport.authenticate('local', (err, user, info) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ message: 'Internal server error' });
-        }
-    
-        if (!user) {
-          return res.status(401).json({ message: 'Invalid credentials' });
-        }
-    
-        req.session.user = {
-          email: user.email,
-        };
-    
-        // Check if the email matches the admin email
-        if (user.email === 'demoproject369@gmail.com') {
-          // Redirect to the admin page
-          return res.redirect('/admin-dashboard');
-        }
-    
-        // Redirect to the dashboard
-        return res.redirect('/user-dashboard');
-      })(req, res, next);
+  const authenticatedUser = passport.authenticate('local', (err, user, info) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+  
+    if (!user.is_verified) {
+      return res.status(401).json({ message: 'Email not verified' });
+    }
+  
+    req.session.user = {
+      email: user.email,
+    };
+  
+    // Check if the email matches the admin email
+    if (user.email === 'demoproject369@gmail.com') {
+      // Redirect to the admin page
+      return res.redirect('/admin-dashboard');
+    }
+  
+    // Redirect to the dashboard
+    return res.redirect('/user-dashboard');
+  })(req, res, next);
+  
 
 };
 
@@ -178,4 +180,88 @@ exports.dashboardUser = async (req, res) => {
 exports.dashboardAdmin = async (req, res) => {
     res.render("admin-dashboard");
   
+  };
+exports.requestPd = async (req, res) => {
+    res.render("request-resetPd");
+  
+  };
+
+
+// Set up nodemailer transporter with your email service credentials
+const transporter = nodemailer.createTransport({
+    pool: true,
+      host: "smtp.gmail.com",
+      port: 465,
+      auth: {
+        user: 'demoproject369@gmail.com',
+        pass: 'ikuckqlhraenviig'
+      },
+      tls: {
+      
+        rejectUnauthorized: false,
+      },
+  });
+  
+  // Generate a random token for password reset
+  function generateToken() {
+    const length = 20;
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+  }
+  
+  // Store the token and email in memory for demo purposes
+  const tokenMap = new Map();
+
+  exports.forgetPassword = async (req, res) => {
+    const { email } = req.body;
+    // Check if email exists in your user database
+    // If it does, generate a token and send a password reset email
+    // with a link that includes the token in the URL
+    try {
+      const user = await authModel.findEmail({ email });
+      console.log(`email:${email}`)
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      const token = generateToken();
+      tokenMap.set(token, email);
+      const mailOptions = {
+        from: 'demoproject369@gmail.com',
+        to: email,
+        subject: 'Password reset request',
+        text: `Click the following link to reset your password: http://localhost:8000/reset-password/${token}`
+      };
+  
+     
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log(error);
+          return res.status(500).json({ message: 'Error sending email' });
+        }
+        console.log('Email sent: ' + info.response);
+        res.status(200).json({ message: 'Password reset email sent' });
+        pool.query('UPDATE users SET reset_token = $1 WHERE email = $2', [token, email], (err, result) => {
+          if (err) {
+            console.log(err);
+            return res.status(400).json({ message: 'Reset password link error' });
+          }
+          console.log('Reset password link updated successfully');
+        });
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+     
+  };
+
+  exports.resetPassword = (req, res) => {
+    const { token } = req.query;
+    res.render('reset-password', {token});
+  
+   
   };

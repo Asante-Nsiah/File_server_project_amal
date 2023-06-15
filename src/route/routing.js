@@ -12,8 +12,10 @@ router.post('/login', auth.loginAccount)
 router.get('/verify', auth.verify) 
 router.get('/user-dashboard', auth.dashboardUser) 
 router.get('/admin-dashboard', auth.dashboardAdmin) 
-// router.get('/verify', auth.verify) 
-
+router.post('/request-resetPd', auth.requestPd) 
+router.get('/request-resetPd', auth.requestPd) 
+router.get('/reset-password/:token', auth.forgetPassword)
+router.get('/reset-password', auth.resetPassword)
 
 
 
