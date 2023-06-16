@@ -6,7 +6,7 @@ const { Pool } = require('pg');
         host: '127.0.0.1',
         database: 'fileServerDB',
         password: 'postgres',
-        port: 5433,
+        port: '5433',
       });
     
       pool.connect()
