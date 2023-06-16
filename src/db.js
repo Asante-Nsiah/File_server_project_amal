@@ -2,11 +2,14 @@ const { Pool } = require('pg');
 
 
     const pool = new Pool({
-        user: 'postgres',
-        host: '127.0.0.1',
-        database: 'fileServerDB',
-        password: 'postgres',
-        port: '5433',
+        user: 'projectadmin',
+        host: 'dpg-ci661uunqql3q38ihjvg-a.oregon-postgres.render.com',
+        database: 'fileserverdb_2s24',
+        password: 'Y4M0LaKBqXFCLXwmdYvdn3NOI6jJxoEN',
+        ssl: {
+          rejectUnauthorized: false
+        },
+        port: '5432',
       });
     
       pool.connect()
