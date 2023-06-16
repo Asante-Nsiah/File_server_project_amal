@@ -1,7 +1,8 @@
-const pool = require("./../db");
+const pool = require("../db");
 const multer = require('multer');
 const nodemailer = require('nodemailer');
-
+const path = require('path');
+const fs = require('fs');
 
 // Set up file upload storage using Multer
 const storage = multer.diskStorage({
@@ -32,7 +33,7 @@ const storage = multer.diskStorage({
           const uploadedFile = result.rows[0];
   
           // Render the EJS template with the uploaded file's information
-          res.render('admin-dashboard', { file: uploadedFile });
+          res.render('admin-dashboard', { files: uploadedFile });
         } catch (error) {
           console.error('Error storing file:', error);
           res.status(500).send('Internal server error');
@@ -55,16 +56,40 @@ const storage = multer.diskStorage({
       }
   };
 
-exports.displayUserFiles = async (req, res) => {
-    try {
-        // Retrieve files from the database
-        const filesQuery = 'SELECT * FROM files';
-        const filesResult = await pool.query(filesQuery);
-        const files = filesResult.rows;
-    
-        res.render('user-dashboard', { files });
-      } catch (error) {
-        console.error('Error retrieving files:', error);
-        res.status(500).send('Internal server error');
-      }
-};
+exports.downloadCount = async (req, res) => {
+  try {
+    // Fetch downloads information from the database
+    const result = await pool.query('SELECT download_count FROM downloads');
+    const downloads = result.rows.map((row) => row.count);
+
+    res.render('downloads', { downloads: downloads });
+  } catch (err) {
+    console.error('Error fetching downloads:', err);
+    res.status(500).send('Error fetching downloads');
+  }
+  };
+
+exports.downloadFile = async (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.resolve(__dirname, 'fileserver', 'files', filename);
+  
+  // Check if the file exists before initiating the download
+  fs.access(filePath, fs.constants.F_OK, (err) => {
+    if (err) {
+      console.error('Error downloading file:', err);
+      res.status(404).send('File not found');
+      return;
+    }
+  
+    // Stream the file for download
+    const fileStream = fs.createReadStream(filePath);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    fileStream.pipe(res);
+  
+    // Handle any stream or download errors
+    fileStream.on('error', (err) => {
+      console.error('Error streaming file:', err);
+      res.status(500).send('Error downloading file');
+    });
+  });
+}

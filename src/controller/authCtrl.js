@@ -173,7 +173,17 @@ exports.loginAccount = async (req, res, next) => {
 };
 
 exports.dashboardUser = async (req, res) => {
-    res.render("user-dashboard");
+  try {
+    // Retrieve files from the database
+    const filesQuery = 'SELECT * FROM files';
+    const filesResult = await pool.query(filesQuery);
+    const files = filesResult.rows;
+
+    res.render('user-dashboard', { files: files });
+  } catch (error) {
+    console.error('Error retrieving files:', error);
+    res.status(500).send('Internal server error');
+  }
   
   };
 

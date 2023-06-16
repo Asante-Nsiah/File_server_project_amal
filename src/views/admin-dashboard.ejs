@@ -43,14 +43,14 @@
     <!-- Downloads Info -->
     <% if (downloads && downloads.length > 0) { %>
         <% downloads.forEach((count) => { %>
-            <div class="downloads-info">
-                <h3>Downloads Info:</h3>
-                <p>Number of Downloads: <%= count %></p>
-            </div>
+          <div class="downloads-info">
+            <h3>Downloads Info:</h3>
+            <p>Number of Downloads: <%= count %></p>
+          </div>
         <% }); %>
-    <% } else { %>
+      <% } else { %>
         <p>No download information available.</p>
-    <% } %>
+      <% } %>
 
     <!-- Email Info -->
     <% if (emails && emails.length > 0) { %>
