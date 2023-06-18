@@ -20,9 +20,10 @@ router.get('/reset-password/:token', auth.forgetPassword)
 router.get('/reset-password', auth.resetPassword)
 router.post('/upload', authFile.uploadFile)
 router.get('/upload',  authFile.uploadFile)
-router.get('/user-dashboard/download/:filename',  authFile.downloadFile)
+router.get('/download/:filename',  authFile.downloadFile)
 // router.post('/download/:filename',  authFile.downloadFile)
 // router.get('/admin-dashboard', authFile.downloadCount)
+router.get('/search', authFile.searchFiles)
 
 
 

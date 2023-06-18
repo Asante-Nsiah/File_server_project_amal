@@ -79,4 +79,23 @@ exports.downloadFile = async (req, res) => {
     res.status(500).send('Error downloading file');
   });
   });
-}
+};
+
+exports.searchFiles = (req, res) =>{
+  const searchTerm = req.query.searchTerm; // Assuming the search term is sent as a query parameter
+
+  // Perform the search query using PostgreSQL
+  pool.query(
+    'SELECT * FROM files WHERE title ILIKE $1 OR description ILIKE $1',
+    [`%${searchTerm}%`],
+    (err, result) => {
+      if (err) {
+        console.error('Error executing search query:', err);
+        res.sendStatus(500); // Internal Server Error
+      } else {
+        const files = result.rows;
+        res.render('user-dashboard', { files }); // Render the user-dashboard view with the search results
+      }
+    }
+  );
+};
