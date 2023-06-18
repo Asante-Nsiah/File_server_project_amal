@@ -6,72 +6,55 @@ const fs = require('fs');
 
 // Set up file upload storage using Multer
 const storage = multer.diskStorage({
-    destination: 'uploads/',
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      const extension = file.originalname.split('.').pop();
-      cb(null, file.fieldname + '-' + uniqueSuffix + '.' + extension);
-    },
-  });
-  
-  const upload = multer({ storage }).single('file');
-  
-  exports.uploadFile = (req, res) => {
-    upload(req, res, async (err) => {
-      if (err) {
-        console.error('Error uploading file:', err);
-        res.status(500).send('Internal server error');
-      } else {
-        const { title, description } = req.body;
-        const file = req.file;
-  
-        try {
-          // Store the file information in the database
-          const query = 'INSERT INTO files (title, description, filename) VALUES ($1, $2, $3) RETURNING *';
-          const values = [title, description, file.filename];
-          const result = await pool.query(query, values);
-          const uploadedFile = result.rows[0];
-  
-          // Render the EJS template with the uploaded file's information
-          res.render('admin-dashboard', { files: uploadedFile });
-        } catch (error) {
-          console.error('Error storing file:', error);
-          res.status(500).send('Internal server error');
-        }
-      }
-    });
-  };
-  
+  destination: 'uploads/',
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const extension = file.originalname.split('.').pop();
+    cb(null, file.fieldname + '-' + uniqueSuffix + '.' + extension);
+  },
+});
 
-  exports.displayAdminFiles = async (req, res) => {
-    try {
-        const query = 'SELECT * FROM files';
-        const result = await pool.query(query);
-        const files = result.rows;
-    
-        res.render('admin-dashboard', { files: files });
+const upload = multer({ storage }).single('file');
+
+exports.uploadFile = async (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      console.error('Error uploading file:', err);
+      res.status(500).send('Internal server error');
+    } else {
+      const { title, description } = req.body;
+      const file = req.file;
+
+      try {
+        // Store the file information in the database
+        const query = 'INSERT INTO files (title, description, filename) VALUES ($1, $2, $3) RETURNING *';
+        const values = [title, description, file.filename]; // Add the filename to the values
+        const result = await pool.query(query, values);
+        const uploadedFile = result.rows[0];
+
+        // Fetch all files from the database
+        const filesQuery = 'SELECT * FROM files';
+        const filesResult = await pool.query(filesQuery);
+        const files = filesResult.rows;
+
+        // Render the admin dashboard template with the uploaded file and all files
+        res.render('admin-dashboard', { files: files, uploadedFile: uploadedFile });
       } catch (error) {
-        console.error('Error retrieving files:', error);
+        console.error('Error storing file:', error);
         res.status(500).send('Internal server error');
       }
-  };
+    }
+  });
+};
 
-exports.downloadCount = async (req, res) => {
-  try {
-    // Fetch downloads information from the database
-    const result = await pool.query('SELECT download_count FROM downloads');
-    const downloads = result.rows.map((row) => row.count);
+  
 
-    res.render('downloads', { downloads: downloads });
-  } catch (err) {
-    console.error('Error fetching downloads:', err);
-    res.status(500).send('Error fetching downloads');
-  }
-  };
 
 exports.downloadFile = async (req, res) => {
   const filename = req.params.filename;
-  const filePath = path.resolve(__dirname, 'fileserver', 'files', filename);
+  const filePath = path.join(__dirname, '..', 'files', filename);
+  console.log(__dirname);
+
   
   // Check if the file exists before initiating the download
   fs.access(filePath, fs.constants.F_OK, (err) => {
@@ -82,14 +65,18 @@ exports.downloadFile = async (req, res) => {
     }
   
     // Stream the file for download
-    const fileStream = fs.createReadStream(filePath);
+    const fileStream = fs.createReadStream(filePath, { autoClose: true });
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    fileStream.pipe(res);
-  
-    // Handle any stream or download errors
-    fileStream.on('error', (err) => {
-      console.error('Error streaming file:', err);
-      res.status(500).send('Error downloading file');
-    });
+    fileStream.pipe(res)
+  .on('finish', () => {
+    // File download completed successfully
+    console.log('File download completed successfully');
+    res.status(200).send('File download completed successfully');
+  })
+  .on('error', (err) => {
+    // Handle any errors that occur during the download
+    console.error('Error downloading file:', err);
+    res.status(500).send('Error downloading file');
+  });
   });
 }

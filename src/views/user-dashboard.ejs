@@ -14,25 +14,24 @@
         <h1>User Page</h1>
         <div class="file-list">
              <!-- File List -->
-        <% if (files && files.length > 0) { %>
-            <% files.forEach((file) => { %>
-                <div class="file-item">
+             <% if (files && files.length > 0) { %>
+                <% files.forEach((file) => { %>
+                  <div class="file-item">
                     <h3><%= file.title %></h3>
                     <p>Description: <%= file.description %></p>
-                    <p>Filename: <%= file.filename %></p>
-                    <!-- <a href="/download/<%= file.filename %>">Download</a> -->
                     <form method="post" action="/send-email">
-                        <input type="hidden" name="filename" value="<%= file.filename %>">
-                        <label for="email">Email:</label>
-                        <input type="email" name="email" id="email" required>
-                        <input type="submit" value="Send via Email">
+                      <input type="hidden" name="filename" value="<%= file.filename %>">
+                      <label for="email">Email:</label>
+                      <input type="email" name="email" id="email" required>
+                      <input type="submit" value="Send via Email">
                     </form>
-                    <button class="download-button" onclick="window.location.href='/download/<%= file.filename %>'">Download</button>
-                </div>
-            <% }); %>
-        <% } else { %>
-            <p>No files available.</p>
-        <% } %>
+                    <a class="download-button" href="/download/<%= file.filename %>">Download</a>
+                  </div>
+                <% }); %>
+              <% } else { %>
+                <p>No files available.</p>
+              <% } %>
+              
     </div>
         </div>
        

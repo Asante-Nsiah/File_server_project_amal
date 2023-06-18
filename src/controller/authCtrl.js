@@ -197,18 +197,18 @@ exports.dashboardAdmin = async (req, res) => {
     const files = filesResult.rows;
   
     // Query the downloads table
-    const downloadsQuery = 'SELECT * FROM downloads'; // Replace with the appropriate query for the downloads table
+    const downloadsQuery = 'SELECT download_count FROM files'; // Replace with the appropriate query for the downloads table
     const downloadsResult = await client.query(downloadsQuery);
     const downloads = downloadsResult.rows;
   
     // Query the emails table
-    const emailsQuery = 'SELECT * FROM emails'; // Replace with the appropriate query for the emails table
+    const emailsQuery = 'SELECT email_count FROM files'; // Replace with the appropriate query for the emails table
     const emailsResult = await client.query(emailsQuery);
     const emails = emailsResult.rows;
   
     client.release();
 
-    res.render('admin-dashboard', { files: files, downloads: downloads, emails: emails });
+    res.render('admin-dashboard', { files, downloads, emails});
   } catch (error) {
     console.error('Error retrieving data:', error);
     res.status(500).send('Internal server error');

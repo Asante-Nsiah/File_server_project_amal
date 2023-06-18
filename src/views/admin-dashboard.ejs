@@ -11,58 +11,55 @@
     <p>Admin's dashboard</p>
     <div class="container">
         <h1>Admin Page</h1>
+    <div class="uploadCard">
+                <!-- Upload Form -->
+<form method="post" action="/upload" enctype="multipart/form-data">
     
-        <!-- File Upload Form -->
-        <form class="file-upload" method="post" action="/upload" enctype="multipart/form-data">
-          <label for="file">File:</label>
-          <input type="file" name="file" id="file">
-          <br>
-          <label for="title">Title:</label>
-          <input type="text" name="title" id="title">
-          <br>
-          <label for="description">Description:</label>
-          <textarea name="description" id="description"></textarea>
-          <br>
-          <input type="submit" value="Upload">
+    <div class="upload-form">
+      <label for="file">Choose File:</label>
+      <input type="file" name="file" id="file" required>
+      <label for="title">Title:</label>
+      <input type="text" name="title" id="title" required>
+      <label for="description">Description:</label>
+      <textarea name="description" id="description" required></textarea>
+      <input type="submit" value="Upload">
+    </div>
+  </form>
+    </div>
+
+
+  <h3>Upload File:</h3>
+  <div class="card">
+<!-- Uploaded Files -->
+<% if (files && files.length > 0) { %>
+    <% files.forEach((file) => { %>
+      <div class="file-item">
+        <h3><%= file.title %></h3>
+        <p>Description: <%= file.description %></p>
+  
+        <!-- Download form
+        <form method="post" action="/send-email">
+          <input type="hidden" name="filename" value="<%= file.filename %>">
+          <label for="email">Email:</label>
+          <input type="email" name="email" id="email" required>
+          <input type="submit" value="Send via Email">
         </form>
-    
-        <!-- File Info -->
-    <% if (files && files.length > 0) { %>
-        <% files.forEach((file) => { %>
-            <div class="file-info">
-                <h3>File Info:</h3>
-                <p>Title: <%= file.title %></p>
-                <p>Description: <%= file.description %></p>
-                <p>Filename: <%= file.filename %></p>
-            </div>
-        <% }); %>
-    <% } else { %>
-        <p>No files available.</p>
-    <% } %>
-
-    <!-- Downloads Info -->
-    <% if (downloads && downloads.length > 0) { %>
-        <% downloads.forEach((count) => { %>
-          <div class="downloads-info">
-            <h3>Downloads Info:</h3>
-            <p>Number of Downloads: <%= count %></p>
-          </div>
-        <% }); %>
-      <% } else { %>
-        <p>No download information available.</p>
-      <% } %>
-
-    <!-- Email Info -->
-    <% if (emails && emails.length > 0) { %>
-        <% emails.forEach((count) => { %>
-            <div class="email-info">
-                <h3>Email Info:</h3>
-                <p>Number of Files Sent via Email: <%= count %></p>
-            </div>
-        <% }); %>
-    <% } else { %>
-        <p>No email information available.</p>
-    <% } %>
+   -->
+        <!-- Download and Email counts -->
+        <div class="counts">
+          <p>Downloads: <%= file.downloadCount %></p>
+          <p>Emails: <%= file.emailCount %></p>
+        </div>
       </div>
+    <% }); %>
+  <% } else { %>
+    <p>No files available.</p>
+  <% } %>
+  
+  </div>
+  
+      </div>
+
+     
 </body>
 </html>
