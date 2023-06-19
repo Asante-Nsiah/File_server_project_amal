@@ -24,7 +24,10 @@ router.get('/download/:filename',  authFile.downloadFile)
 // router.post('/download/:filename',  authFile.downloadFile)
 // router.get('/admin-dashboard', authFile.downloadCount)
 router.get('/search', authFile.searchFiles)
-router.post('/send-email/:filename/:email', authFile.emailFiles)
+router.post('/send-email/:filename', authFile.emailFiles)
+router.get('/email-success', authFile.emailSuccess)
+
+
 
 
 

@@ -20,6 +20,9 @@
             </form>
           </div>
         <h1>User Page</h1>
+          <br>
+          
+
         <div class="file-list">
              <!-- File List -->
              <% if (files && files.length > 0) { %>
@@ -27,12 +30,14 @@
                   <div class="file-item">
                     <h3><%= file.title %></h3>
                     <p>Description: <%= file.description %></p>
-                    <form method="post" action="/send-email/<%= file.filename %>/<%= email %>">
+                    <form method="post" action="/send-email/<%= file.filename %>">
                       <input type="hidden" name="filename" value="<%= file.filename %>">
                       <label for="email">Email:</label>
                       <input type="email" name="email" id="email" value="<%= email %>" required>
                       <button type="submit">Send via Email</button>
                     </form>
+                    
+                    
                     <a class="download-button" href="/uploads/<%= file.filename %>">Download</a>
 
                   </div>
@@ -40,6 +45,9 @@
               <% } else { %>
                 <p>No files available.</p>
               <% } %>
+
+
+
               
     </div>
         </div>
