@@ -179,13 +179,13 @@ exports.dashboardUser = async (req, res) => {
     const filesResult = await pool.query(filesQuery);
     const files = filesResult.rows;
 
-    res.render('user-dashboard', { files: files });
+    const email = req.query.email;
+    res.render('user-dashboard', { files, email });
   } catch (error) {
     console.error('Error retrieving files:', error);
-    res.status(500).send('Internal server error');
+    return res.status(500).send('Internal server error');
   }
-  
-  };
+};
 
 exports.dashboardAdmin = async (req, res) => {
   try {

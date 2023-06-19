@@ -3,6 +3,7 @@ const multer = require('multer');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
+const { promisify } = require('util');
 
 // Set up file upload storage using Multer
 const storage = multer.diskStorage({
@@ -81,6 +82,47 @@ exports.downloadFile = async (req, res) => {
   });
 };
 
+// const access = promisify(fs.access);
+
+// exports.getDownloadLink = async (req, res) => {
+//   const filename = req.params.filename;
+//   const filePath = path.join(__dirname, '..', 'files', filename);
+
+//   try {
+//     await access(filePath, fs.constants.F_OK);
+
+//     const downloadLink = `/download/${filename}`; // Customize this based on your route setup
+
+//     // Render the download link in the user dashboard template
+//     res.render('user-dashboard', { files, downloadLink });
+//   } catch (err) {
+//     console.error('Error generating download link:', err);
+//     // Handle the error and render an appropriate error message in the user dashboard template
+//     res.render('user-dashboard', { error: 'File not found' });
+//   }
+// };
+
+// exports.downloadFile = async (req, res) => {
+//   const filename = req.params.filename;
+//   const filePath = path.join(__dirname, '..', 'files', filename);
+
+//   try {
+//     await access(filePath, fs.constants.F_OK);
+
+//     res.download(filePath, filename, (err) => {
+//       if (err) {
+//         console.error('Error downloading file:', err);
+//         // Handle the error and render an appropriate error message in the user dashboard template
+//         res.render('user-dashboard', { error: 'Error downloading file' });
+//       }
+//     });
+//   } catch (err) {
+//     console.error('Error downloading file:', err);
+//     // Handle the error and render an appropriate error message in the user dashboard template
+//     res.render('user-dashboard', { error: 'File not found' });
+//   }
+// };
+
 exports.searchFiles = (req, res) =>{
   const searchTerm = req.query.searchTerm; // Assuming the search term is sent as a query parameter
 
@@ -99,3 +141,77 @@ exports.searchFiles = (req, res) =>{
     }
   );
 };
+
+// Create a Nodemailer transporter
+const transporter = nodemailer.createTransport({
+  pool: true,
+  host: "smtp.gmail.com",
+  port: 465,
+  auth: {
+    user: 'demoproject369@gmail.com',
+    pass: 'ikuckqlhraenviig'
+  },
+  tls: {
+  
+    rejectUnauthorized: false,
+  },
+});
+
+
+
+exports.emailFiles = (res, req) => {
+  const { filename, email } = req.params;
+
+  if (!filename || !email) {
+    res.status(400).send('Missing filename or email'); // Bad Request
+    return;
+  }
+
+  // Retrieve the file path from the database
+  pool.query('SELECT filepath FROM files WHERE filename = $1', [filename], (err, result) => {
+    if (err) {
+      console.error('Error retrieving file path:', err);
+      res.sendStatus(500); // Internal Server Error
+    } else {
+      const file = result.rows[0];
+
+      if (!file) {
+        res.status(404).send('File not found'); // Not Found
+        return;
+      }
+
+      const filePath = file.filepath;
+
+      // Read the file to get its contents
+      fs.readFile(filePath, (error, data) => {
+        if (error) {
+          console.error('Error reading file:', error);
+          res.sendStatus(500); // Internal Server Error
+        } else {
+          const attachment = {
+            filename: filename, // or use a custom name if desired
+            content: data
+          };
+
+          // Send email with the file attachment
+          transporter.sendMail({
+            from: 'demoproject369@gmail.com',
+            to: email,
+            subject: 'File Attachment',
+            text: 'Dear recipient,\n\nPlease find the file attached for your reference.\n\nBest regards,\nYour Name',
+            attachments: [attachment]
+          }, (emailError, info) => {
+            if (emailError) {
+              console.error('Error sending email:', emailError);
+              res.sendStatus(500); // Internal Server Error
+            } else {
+              console.log('Email sent:', info.response);
+              res.redirect('/user-dashboard'); // Redirect back to the user dashboard
+            }
+          });
+        }
+      });
+    }
+  });
+};
+

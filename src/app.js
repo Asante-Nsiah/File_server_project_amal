@@ -7,6 +7,8 @@ const path = require('path');
 const flash = require('express-flash');
 const session = require('express-session');
 const passport = require('passport');
+const bodyParser = require('body-parser');
+
 
 
 const app = express();
@@ -21,11 +23,13 @@ app.use(session({
     saveUninitialized: false
 }))
 
-
+app.use('/uploads', express.static('uploads'));
 app.use(passport.initialize())
 app.use(passport.session())
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(express.json()); // Used to parse JSON bodies
-app.use(express.urlencoded()); //Parse URL-encoded bodies
+app.use(express.urlencoded({ extended: true }));
 app.use(routes)
 
 app.get('/', (req, res) => {

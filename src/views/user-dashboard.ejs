@@ -27,13 +27,14 @@
                   <div class="file-item">
                     <h3><%= file.title %></h3>
                     <p>Description: <%= file.description %></p>
-                    <form method="post" action="/send-email">
+                    <form method="post" action="/send-email/<%= file.filename %>/<%= email %>">
                       <input type="hidden" name="filename" value="<%= file.filename %>">
                       <label for="email">Email:</label>
-                      <input type="email" name="email" id="email" required>
-                      <input type="submit" value="Send via Email">
+                      <input type="email" name="email" id="email" value="<%= email %>" required>
+                      <button type="submit">Send via Email</button>
                     </form>
-                    <a class="download-button" href="/download/<%= file.filename %>">Download</a>
+                    <a class="download-button" href="/uploads/<%= file.filename %>">Download</a>
+
                   </div>
                 <% }); %>
               <% } else { %>
