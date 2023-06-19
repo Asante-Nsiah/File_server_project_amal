@@ -37,19 +37,13 @@
         <h3><%= file.title %></h3>
         <p>Description: <%= file.description %></p>
   
-        <!-- Download form
-        <form method="post" action="/send-email">
-          <input type="hidden" name="filename" value="<%= file.filename %>">
-          <label for="email">Email:</label>
-          <input type="email" name="email" id="email" required>
-          <input type="submit" value="Send via Email">
-        </form>
-   -->
-        <!-- Download and Email counts -->
+       
         <div class="counts">
-          <p>Downloads: <%= file.downloadCount %></p>
-          <p>Emails: <%= file.emailCount %></p>
+          <p>Downloads: <%= file.download_count || 0 %></p>
+          <p>Emails: <%= file.email_count || 0 %></p>
         </div>
+        <a class="download-button" href="/uploads/<%= file.filename %>">Download</a>
+     
       </div>
     <% }); %>
   <% } else { %>

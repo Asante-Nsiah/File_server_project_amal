@@ -3,7 +3,8 @@ const multer = require('multer');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
-const { promisify } = require('util');
+
+
 
 // Set up file upload storage using Multer
 const storage = multer.diskStorage({
@@ -29,17 +30,22 @@ exports.uploadFile = async (req, res) => {
       try {
         // Store the file information in the database
         const query = 'INSERT INTO files (title, description, filename) VALUES ($1, $2, $3) RETURNING *';
-        const values = [title, description, file.filename]; // Add the filename to the values
+        const values = [title, description, file.filename];
         const result = await pool.query(query, values);
         const uploadedFile = result.rows[0];
+
+        // Fetch the updated download count for the uploaded file
+        const downloadCountQuery = 'SELECT download_count FROM files WHERE id = $1';
+        const downloadCountResult = await pool.query(downloadCountQuery, [uploadedFile.id]);
+        const downloadCount = downloadCountResult.rows[0].download_count;
 
         // Fetch all files from the database
         const filesQuery = 'SELECT * FROM files';
         const filesResult = await pool.query(filesQuery);
         const files = filesResult.rows;
 
-        // Render the admin dashboard template with the uploaded file and all files
-        res.render('admin-dashboard', { files: files, uploadedFile: uploadedFile });
+        // Render the admin dashboard template with the uploaded file, all files, and the download count
+        res.render('admin-dashboard', { files, uploadedFile, downloadCount });
       } catch (error) {
         console.error('Error storing file:', error);
         res.status(500).send('Internal server error');
@@ -53,35 +59,55 @@ exports.uploadFile = async (req, res) => {
 
 
 exports.downloadFile = async (req, res) => {
-  const filename = req.params.filename;
-  const filePath = path.join(__dirname, '..', 'files', filename);
-  console.log(__dirname);
+  try {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, '..', 'uploads', filename);
 
-  
-  // Check if the file exists before initiating the download
-  fs.access(filePath, fs.constants.F_OK, (err) => {
-    if (err) {
-      console.error('Error downloading file:', err);
-      res.status(404).send('File not found');
-      return;
+    // Check if the file exists before initiating the download
+    const fileExists = await fs.promises.access(filePath, fs.constants.F_OK)
+      .then(() => true)
+      .catch(() => false);
+
+    if (!fileExists) {
+      console.error('Error downloading file: File not found');
+      return res.status(404).send('File not found');
     }
-  
+
     // Stream the file for download
     const fileStream = fs.createReadStream(filePath, { autoClose: true });
+
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     fileStream.pipe(res)
-  .on('finish', () => {
-    // File download completed successfully
-    console.log('File download completed successfully');
-    res.status(200).send('File download completed successfully');
-  })
-  .on('error', (err) => {
-    // Handle any errors that occur during the download
-    console.error('Error downloading file:', err);
+      .on('finish', async () => {
+        // File download completed successfully
+        console.log('File download completed successfully');
+
+        // Increment the download count in the database
+        const incrementQuery = 'UPDATE files SET download_count = download_count + 1 WHERE filename = $1 RETURNING download_count';
+        const result = await pool.query(incrementQuery, [filename]);
+        const downloadCount = result.rows[0].download_count;
+
+        // Update the email count in the database
+        const emailCountQuery = 'UPDATE files SET email_count = COALESCE(email_count, 0) + 1 WHERE filename = $1';
+        await pool.query(emailCountQuery, [filename]);
+
+        // Send the response with the updated download count
+        res.status(200).json({ message: 'File downloaded successfully', downloadCount });
+      })
+      .on('error', (err) => {
+        // Handle any errors that occur during the download
+        console.error('Error downloading file:', err);
+        res.status(500).send('Error downloading file');
+      });
+  } catch (error) {
+    console.error('Error downloading file:', error);
     res.status(500).send('Error downloading file');
-  });
-  });
+  }
 };
+
+
+
+
 
 
 
@@ -98,7 +124,7 @@ exports.searchFiles = (req, res) =>{
         res.sendStatus(500); // Internal Server Error
       } else {
         const files = result.rows;
-        res.render('user-dashboard', { files }); // Render the user-dashboard view with the search results
+        res.render('user-dashboard', { files, email: '' }); // Render the user-dashboard view with the search results
       }
     }
   );
@@ -155,6 +181,11 @@ exports.emailFiles = async (req, res) => {
     });
 
     console.log('Email sent:', emailInfo.response);
+
+    // Increment the email count in the database
+    const incrementQuery = 'UPDATE files SET email_count = COALESCE(email_count, 0) + 1 WHERE filename = $1';
+    await pool.query(incrementQuery, [filename]);
+
     const queryParams = new URLSearchParams({ message: 'Email sent successfully' }).toString();
     res.redirect(`/email-success?${queryParams}`);
   } catch (error) {
@@ -162,6 +193,7 @@ exports.emailFiles = async (req, res) => {
     res.status(500).send('Internal server error');
   }
 };
+
 
 exports.emailSuccess = (req, res) => {
   const { message } = req.query;

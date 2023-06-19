@@ -175,7 +175,7 @@ exports.loginAccount = async (req, res, next) => {
 exports.dashboardUser = async (req, res) => {
   try {
     // Retrieve files from the database
-    const filesQuery = 'SELECT * FROM files';
+    const filesQuery = 'SELECT *, COALESCE(download_count, 0) AS download_count FROM files';
     const filesResult = await pool.query(filesQuery);
     const files = filesResult.rows;
 
@@ -193,7 +193,7 @@ exports.dashboardAdmin = async (req, res) => {
     const client = await pool.connect();
   
     // Query the files table
-    const filesQuery = 'SELECT * FROM files'; // Replace with the appropriate query for the files table
+    const filesQuery = 'SELECT *, COALESCE(download_count, 0) AS download_count FROM files';
     const filesResult = await client.query(filesQuery);
     const files = filesResult.rows;
   
@@ -209,7 +209,7 @@ exports.dashboardAdmin = async (req, res) => {
   
     client.release();
 
-    res.render('admin-dashboard', { files, downloads, emails});
+    res.render('admin-dashboard', { files });
   } catch (error) {
     console.error('Error retrieving data:', error);
     res.status(500).send('Internal server error');

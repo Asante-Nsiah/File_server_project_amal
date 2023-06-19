@@ -37,8 +37,13 @@
                       <button type="submit">Send via Email</button>
                     </form>
                     
-                    
+            
                     <a class="download-button" href="/uploads/<%= file.filename %>">Download</a>
+
+                    <div class="counts">
+                      <p>Downloads: <%= file.download_count || 0 %></p>
+                      <p>Emails: <%= file.email_count || 0 %></p>
+                    </div>
 
                   </div>
                 <% }); %>
