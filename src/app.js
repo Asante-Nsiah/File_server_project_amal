@@ -23,6 +23,7 @@ app.use(session({
     saveUninitialized: false
 }))
 
+app.use('/update-password', routes);
 app.use('/uploads', express.static('uploads'));
 app.use(passport.initialize())
 app.use(passport.session())

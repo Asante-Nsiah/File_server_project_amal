@@ -95,8 +95,11 @@ body {
 
 .card{
   display: flex;
-  gap: 15px;
+  flex-wrap: wrap; 
+  gap: 20px; 
+
 }
+
 
 .uploadCard {
   background-color: var(--medium-green) ;
@@ -105,3 +108,4 @@ body {
   border-radius: 10px;
   text-align: center;
 }
+

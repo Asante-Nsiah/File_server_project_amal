@@ -198,12 +198,12 @@ exports.dashboardAdmin = async (req, res) => {
     const files = filesResult.rows;
   
     // Query the downloads table
-    const downloadsQuery = 'SELECT download_count FROM files'; // Replace with the appropriate query for the downloads table
+    const downloadsQuery = 'SELECT download_count FROM files'; 
     const downloadsResult = await client.query(downloadsQuery);
     const downloads = downloadsResult.rows;
   
     // Query the emails table
-    const emailsQuery = 'SELECT email_count FROM files'; // Replace with the appropriate query for the emails table
+    const emailsQuery = 'SELECT email_count FROM files'; 
     const emailsResult = await client.query(emailsQuery);
     const emails = emailsResult.rows;
   
@@ -224,79 +224,127 @@ exports.requestPd = async (req, res) => {
 
 // Set up nodemailer transporter with your email service credentials
 const transporter = nodemailer.createTransport({
-    pool: true,
-      host: "smtp.gmail.com",
-      port: 465,
-      auth: {
-        user: 'demoproject369@gmail.com',
-        pass: 'ikuckqlhraenviig'
-      },
-      tls: {
-      
-        rejectUnauthorized: false,
-      },
-  });
-  
-  // Generate a random token for password reset
-  function generateToken() {
-    const length = 20;
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < length; i++) {
-      result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return result;
+  pool: true,
+  host: "smtp.gmail.com",
+  port: 465,
+  auth: {
+    user: 'demoproject369@gmail.com',
+    pass: 'ikuckqlhraenviig'
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+
+function generateToken(payload) {
+  const length = 20;
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
-  
-  // Store the token and email in memory for demo purposes
-  const tokenMap = new Map();
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64');
+  return `${result}.${encodedPayload}`;
+}
 
-  exports.forgetPassword = async (req, res) => {
-    const { email } = req.body;
-    // Check if email exists in your user database
-    // If it does, generate a token and send a password reset email
-    // with a link that includes the token in the URL
-    try {
-      const user = await authModel.findEmail({ email });
-      console.log(`email:${email}`)
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-      const token = generateToken();
-      tokenMap.set(token, email);
-      const mailOptions = {
-        from: 'demoproject369@gmail.com',
-        to: email,
-        subject: 'Password reset request',
-        text: `Click the following link to reset your password: http://localhost:8000/reset-password/${token}`
-      };
-  
-     
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log(error);
-          return res.status(500).json({ message: 'Error sending email' });
-        }
-        console.log('Email sent: ' + info.response);
-        res.status(200).json({ message: 'Password reset email sent' });
-        pool.query('UPDATE users SET reset_token = $1 WHERE email = $2', [token, email], (err, result) => {
-          if (err) {
-            console.log(err);
-            return res.status(400).json({ message: 'Reset password link error' });
-          }
-          console.log('Reset password link updated successfully');
-        });
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: 'Internal server error' });
+
+const tokenMap = new Map();
+
+exports.forgetPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
     }
-     
-  };
 
-  exports.resetPassword = (req, res) => {
-    const { token } = req.query;
-    res.render('reset-password', {token});
+    const user = await authModel.findEmail({ email });
+    console.log(`email: ${email}`);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const tokenPayload = {
+      email,
+      expiryTime: Date.now() + (24 * 60 * 60 * 1000) // Set token expiration time to 24 hours from now
+    };
+    const token = generateToken(tokenPayload);
+
+    tokenMap.set(token, email);
+
+    const mailOptions = {
+      from: 'demoproject369@gmail.com',
+      to: email,
+      subject: 'Password reset request',
+      text: `Click the following link to reset your password: http://localhost:8000/update-password/${token}`
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Email sent');
+    res.status(200).json({ message: 'Password reset email sent' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    // Retrieve the email associated with the token from the database or cache
+    const email = tokenMap.get(token);
+
+    if (!email) {
+      return res.status(404).json({ message: 'Invalid or expired reset token' });
+    }
+
+    // Render the reset-password view and pass the email and token as query parameters
+    res.render('update-password', { email, token });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
   
-   
-  };
+
+ exports.updatePassword = async (req, res) => {
+  const { newpassword, confirmpassword, token } = req.body;
+
+try {
+  const email = tokenMap.get(token);
+
+  if (!email) {
+    return res.status(404).json({ message: 'Invalid or expired reset token' });
+  }
+
+  if (newpassword !== confirmpassword) {
+    return res.status(400).json({ message: 'Passwords do not match' });
+  } else {
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newpassword, 10);
+
+    // Update the user's password in the database
+    await pool.query('UPDATE users SET password = $1 WHERE email = $2', [hashedPassword, email]);
+    console.log('Password reset successfully');
+  }
+
+  // Remove the token from the tokenMap
+  tokenMap.delete(token);
+
+  // Send a success message
+  res.status(200).json({ message: 'Password reset successful' });
+
+ 
+  
+} catch (error) {
+  console.log(error);
+  res.status(500).json({ message: 'Internal server error' });
+}
+
+};
+
+  
+  
+  
