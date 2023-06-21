@@ -1,14 +1,14 @@
 
 const { Pool } = require('pg');
-const knexConfig = require('./knexfile');
+require('dotenv').config();
 
 
     const pool = new Pool({
-        user: 'postgres',
-        host: 'localhost',
-        database: 'fileServerDB',
-        password: 'postgres',
-        port: 5433,
+      host: process.env.PGHOST,
+      port: process.env.PGPORT,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      database: process.env.PGDATABASE
       });
     
       pool.connect()
