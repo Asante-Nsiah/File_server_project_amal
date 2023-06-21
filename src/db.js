@@ -1,7 +1,7 @@
-const { Pool } = require('pg');
-const knex = require('knex');
+// const { Pool } = require('pg');
+const  ConnectDb  = require('./migrateDb');
 
-    const pool = new Pool({
+    const pool = new ConnectDb({
         user: 'postgres',
         host: 'localhost',
         database: 'fileServerDB',
@@ -9,23 +9,16 @@ const knex = require('knex');
         port: '5433',
       });
     
-      pool.connect()
-      .then(() => {
-        console.log('Connected to fileServerDB database');
-      })
-      .catch((err) => {
-        console.error('Error connecting to database:', err);
-      });
-
-      const db = knex({
-        client: 'pg',
-        connection: {
-          connectionString: 'Y4M0LaKBqXFCLXwmdYvdn3NOI6jJxoEN@dpg-ci661uunqql3q38ihjvg',
-          ssl: {
-            rejectUnauthorized: false
-          }
+    
+      
+       async function poool() {
+        try {
+          await pool.connect();
+          console.log('Connected to fileServerDB database');
+        } catch (err) {
+          console.error('Error connecting to database:', err);
         }
-      });
+      }
 
 
 module.exports = pool;

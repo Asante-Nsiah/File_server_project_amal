@@ -8,7 +8,7 @@ const flash = require('express-flash');
 const session = require('express-session');
 const passport = require('passport');
 const bodyParser = require('body-parser');
-
+const connectDb = require('./db')
 
 
 const app = express();
