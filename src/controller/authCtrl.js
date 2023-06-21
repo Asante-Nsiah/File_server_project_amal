@@ -112,7 +112,7 @@ exports.verify = async (req, res) => {
     const query = 'SELECT * FROM users WHERE email = $1';
     const values = [email];
 
-    const { rows } = await poool.query(query, values);
+    const { rows } = await pool.query(query, values);
 
     if (rows.length === 0) {
       return res.status(400).send('User not found');
@@ -127,7 +127,7 @@ exports.verify = async (req, res) => {
     const updateQuery = 'UPDATE users SET is_verified = $1 WHERE email = $2';
     const updateValues = [true, email];
 
-    await poool.query(updateQuery, updateValues);
+    await pool.query(updateQuery, updateValues);
 
     res.send('Email verified!');
   } catch (error) {
