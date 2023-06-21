@@ -85,7 +85,7 @@ if (existingUser.rows.length > 0) {
     
         const insertQuery = 'INSERT INTO users (email, password, is_verified, verification_token) VALUES ($1, $2, $3, $4)';
         const insertValues = [email, password, false];
-        await pool.query(insertQuery, insertValues);
+        await poool.query(insertQuery, insertValues);
         res.send('Verification email sent!');
         console.log(`This is the token: ${token}`);
       } catch (error) {
@@ -112,7 +112,7 @@ exports.verify = async (req, res) => {
     const query = 'SELECT * FROM users WHERE email = $1';
     const values = [email];
 
-    const { rows } = await pool.query(query, values);
+    const { rows } = await poool.query(query, values);
 
     if (rows.length === 0) {
       return res.status(400).send('User not found');
@@ -127,7 +127,7 @@ exports.verify = async (req, res) => {
     const updateQuery = 'UPDATE users SET is_verified = $1 WHERE email = $2';
     const updateValues = [true, email];
 
-    await pool.query(updateQuery, updateValues);
+    await poool.query(updateQuery, updateValues);
 
     res.send('Email verified!');
   } catch (error) {
