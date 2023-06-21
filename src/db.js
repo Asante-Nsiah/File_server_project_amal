@@ -20,7 +20,7 @@ const knex = require('knex');
       const db = knex({
         client: 'pg',
         connection: {
-          connectionString: 'postgres://projectadmin:Y4M0LaKBqXFCLXwmdYvdn3NOI6jJxoEN@dpg-ci661uunqql3q38ihjvg-a/fileserverdb_2s24',
+          connectionString: 'Y4M0LaKBqXFCLXwmdYvdn3NOI6jJxoEN@dpg-ci661uunqql3q38ihjvg',
           ssl: {
             rejectUnauthorized: false
           }
