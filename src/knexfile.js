@@ -9,6 +9,7 @@ const knexConfig = {
     user: process.env.PGUSER,
     password: process.env.PGPASSWORD,
     database: process.env.PGDATABASE,
+    database_url: process.env.PGDATABASE_URL
   },
 };
 
