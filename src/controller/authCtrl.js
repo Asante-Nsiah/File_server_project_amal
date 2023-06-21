@@ -77,7 +77,8 @@ if (existingUser.rows.length > 0) {
         from: 'demoproject369@gmail.com',
         to: email,
         subject: 'Verify your email',
-        text: `Please click the following link to verify your email: http://localhost:8000/verify?token=${token}`
+        text: `Please click the following link to verify your email: https://file-server-project-tc.onrender.com/verify?token=${token}`
+        // text: `Please click the following link to verify your email: http://localhost:8000/verify?token=${token}`
       };
     console.log('find error')
       try {
@@ -275,7 +276,8 @@ exports.forgetPassword = async (req, res) => {
       from: 'demoproject369@gmail.com',
       to: email,
       subject: 'Password reset request',
-      text: `Click the following link to reset your password: http://localhost:8000/update-password/${token}`
+      text: `Click the following link to reset your password: https://file-server-project-tc.onrender.com/${token}`
+      // text: `Click the following link to reset your password: http://localhost:8000/update-password/${token}`
     };
 
     await transporter.sendMail(mailOptions);
