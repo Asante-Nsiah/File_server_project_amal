@@ -276,7 +276,7 @@ exports.forgetPassword = async (req, res) => {
       from: 'demoproject369@gmail.com',
       to: email,
       subject: 'Password reset request',
-      text: `Click the following link to reset your password: https://file-server-project-tc.onrender.com/${token}`
+      text: `Click the following link to reset your password: https://file-server-project-tc.onrender.com/update-password/${token}`
       // text: `Click the following link to reset your password: http://localhost:8000/update-password/${token}`
     };
 
