@@ -6,8 +6,10 @@ const routes = require('./route/routing');
 const path = require('path');
 const flash = require('express-flash');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
 const passport = require('passport');
 const bodyParser = require('body-parser');
+const pool = require("./db");
 
 
 
@@ -18,9 +20,19 @@ initializePassport(passport);
 
 app.use(flash())
 app.use(session({
+    store: new pgSession({
+        // conString: 'postgres://postgres:postgres@localhost:5433/fileServerDB',
+        conString: 'postgres://projectadmin:Y4M0LaKBqXFCLXwmdYvdn3NOI6jJxoEN@dpg-ci661uunqql3q38ihjvg-a.oregon-postgres.render.com/fileserverdb_2s24',
+        tableName: 'session',
+    }),
     secret: process.env.SESSION_SECRET || 'defaultSecret',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: {
+        secure: true, // Set to true for HTTPS-only cookie
+        httpOnly: true, // Set to true to prevent client-side access to the cookie
+        maxAge: 86400000, // Session expiration time in milliseconds (e.g., 1 day)
+      },
 }))
 
 app.use('/update-password', routes);

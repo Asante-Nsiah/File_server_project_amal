@@ -29,10 +29,22 @@ exports.uploadFile = async (req, res) => {
 
       try {
         // Store the file information in the database
-        const query = 'INSERT INTO files (title, description, filename) VALUES ($1, $2, $3) RETURNING *';
-        const values = [title, description, file.filename];
-        const result = await pool.query(query, values);
-        const uploadedFile = result.rows[0];
+        // const query = 'INSERT INTO files (title, description, filename) VALUES ($1, $2, $3) RETURNING *';
+        // const values = [title, description, file.filename];
+        // const result = await pool.query(query, values);
+        // const uploadedFile = result.rows[0];
+        const insertQuery = 'INSERT INTO files (title, description, filename) VALUES ($1, $2, $3)';
+const insertValues = [title, description, file.filename];
+
+// Insert the file
+await pool.query(insertQuery, insertValues);
+
+// Retrieve the inserted file and order by a suitable column (e.g., id)
+const selectQuery = 'SELECT * FROM files WHERE filename = $1 ORDER BY id DESC LIMIT 1';
+const selectValues = [file.filename];
+const selectResult = await pool.query(selectQuery, selectValues);
+const uploadedFile = selectResult.rows[0];
+
 
         // Fetch the updated download count for the uploaded file
         const downloadCountQuery = 'SELECT download_count FROM files WHERE id = $1';

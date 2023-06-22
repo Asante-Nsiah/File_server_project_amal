@@ -1,7 +1,7 @@
 const express = require('express');
 const auth = require('../controller/authCtrl');
 const authFile = require('../middleware/fileserver') 
-
+// const checkSession = require('./')
 
 
 const router = express.Router();
@@ -11,6 +11,8 @@ router.post('/signup', auth.signup)
 router.get('/login', auth.login) 
 router.post('/login', auth.loginAccount) 
 router.get('/verify', auth.verify) 
+router.get('/logout', auth.checkSession, auth.logout) 
+
 
 router.get('/user-dashboard', auth.dashboardUser) 
 router.get('/admin-dashboard', auth.dashboardAdmin) 

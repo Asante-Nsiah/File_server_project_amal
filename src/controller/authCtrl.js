@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const authModel = require("../model/authuModel");
 const bcrypt = require('bcrypt');
-
+const { v4: uuidv4 } = require('uuid');
 
 exports.register = (req, res) => {
     res.render("signup");
@@ -158,6 +158,7 @@ exports.loginAccount = async (req, res, next) => {
   
     req.session.user = {
       email: user.email,
+      sessionId: uuidv4()
     };
   
     // Check if the email matches the admin email
@@ -347,6 +348,41 @@ try {
 
 };
 
-  
-  
-  
+exports.checkSession = (req, res, next) => {
+  if (req.session.user && req.session.user.sessionId) {
+    // Check if the stored session identifier matches the current session identifier
+    if (req.session.user.sessionId !== req.session.id) {
+      // If the session identifiers do not match, it means the user has logged in from a different browser or device.
+      // In this case, log them out and redirect to the login page.
+      delete req.session.user.sessionId;
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+          return res.status(500).send('Internal Server Error');
+        }
+        res.redirect('/login'); // Redirect the user to the login page
+      });
+    } else {
+      // Session identifier matches, proceed to the next middleware or route
+      next();
+    }
+  } else {
+    // No session identifier found, user is not logged in
+    res.redirect('/login'); // Redirect the user to the login page
+  }
+}; 
+
+exports.logout = (req, res) => {
+  if (req.session.user) {
+    delete req.session.user.sessionId;
+  }
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+      return res.status(500).send('Internal Server Error');
+    }
+    res.redirect('/login'); // Redirect the user to the login page
+  });
+};
+
+ 
