@@ -142,47 +142,77 @@ exports.login = async (req, res) => {
 
 };
 exports.loginAccount = async (req, res, next) => {
-  const authenticatedUser = passport.authenticate('local', (err, user, info) => {
+  passport.authenticate('local', async (err, user, info) => {
     if (err) {
       console.error(err);
       return res.status(500).json({ message: 'Internal server error' });
     }
-  
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-  
+
     if (!user.is_verified) {
       return res.status(401).json({ message: 'Email not verified' });
     }
-  
+
     req.session.user = {
       email: user.email,
       sessionId: uuidv4()
     };
-  
-    // Check if the email matches the admin email
-    if (user.email === 'demoproject369@gmail.com') {
-      // Redirect to the admin page
-      return res.redirect('/admin-dashboard');
-    }
-  
-    // Redirect to the dashboard
-    return res.redirect('/user-dashboard');
-  })(req, res, next);
-  
 
-};
+    // Debugging: Log the session user object
+    console.log('Session user:', req.session.user);
 
-exports.dashboardUser = async (req, res) => {
-  try {
-    // Retrieve files from the database
-    const filesQuery = 'SELECT *, COALESCE(download_count, 0) AS download_count FROM files';
+    // Retrieve files from the database, ordered by the "id" column in descending order
+    const filesQuery = 'SELECT * FROM files ORDER BY id DESC';
     const filesResult = await pool.query(filesQuery);
     const files = filesResult.rows;
 
-    const email = req.query.email;
-    const { message } = req.query;
+    // Check if the email matches the admin email
+    if (user.email === 'demoproject369@gmail.com') {
+      // Debugging: Log admin login
+      console.log('Admin logged in');
+      // Render the admin dashboard view with the files
+      return res.render('admin-dashboard', { files });
+    }
+
+    // Debugging: Log user login
+    console.log('User logged in');
+
+    
+    // Render the user dashboard view
+    return res.render('user-dashboard', { files, email: '' });
+  })(req, res, next);
+};
+
+
+exports.dashboardUser = async (req, res) => {
+  try {
+    if (!req.session.user) {
+      // User is not logged in, redirect to the login page or show an appropriate message
+      return res.redirect('/login'); // Replace '/login' with the actual URL of your login page
+    }
+
+    // Retrieve files from the database, ordered by the "id" column in descending order
+    const filesQuery = 'SELECT * FROM files ORDER BY id DESC';
+    const filesResult = await pool.query(filesQuery);
+    const files = filesResult.rows;
+
+    // Fetch the download count and email count for each file and add them to the file object
+    for (const file of files) {
+      const fetchDownloadCountQuery = 'SELECT download_count FROM files WHERE filename = $1';
+      const downloadCountResult = await pool.query(fetchDownloadCountQuery, [file.filename]);
+      file.downloadCount = downloadCountResult.rows[0].download_count;
+
+      const fetchEmailCountQuery = 'SELECT email_count FROM files WHERE filename = $1';
+      const emailCountResult = await pool.query(fetchEmailCountQuery, [file.filename]);
+      file.emailCount = emailCountResult.rows[0].email_count;
+    }
+
+    const email = req.session.user.email;
+    const message = req.query.message;
+    
     res.render('user-dashboard', { files, email, message });
   } catch (error) {
     console.error('Error retrieving files:', error);
@@ -190,34 +220,43 @@ exports.dashboardUser = async (req, res) => {
   }
 };
 
+
 exports.dashboardAdmin = async (req, res) => {
   try {
-    const client = await pool.connect();
-  
-    // Query the files table
-    const filesQuery = 'SELECT *, COALESCE(download_count, 0) AS download_count FROM files';
-    const filesResult = await client.query(filesQuery);
+    if (!req.session.user || req.session.user.role !== 'admin') {
+      // User is not logged in as an admin, redirect to the appropriate page or show an appropriate message
+      return res.redirect('/admin-login'); // Replace '/admin-login' with the actual URL of your admin login page
+    }
+
+    // Retrieve files from the database, ordered by the "id" column in descending order
+    const filesQuery = 'SELECT * FROM files ORDER BY id DESC';
+    const filesResult = await pool.query(filesQuery);
     const files = filesResult.rows;
-  
-    // Query the downloads table
-    const downloadsQuery = 'SELECT download_count FROM files'; 
-    const downloadsResult = await client.query(downloadsQuery);
-    const downloads = downloadsResult.rows;
-  
-    // Query the emails table
-    const emailsQuery = 'SELECT email_count FROM files'; 
-    const emailsResult = await client.query(emailsQuery);
-    const emails = emailsResult.rows;
-  
-    client.release();
+
+    // Fetch the download count and email count for each file and add them to the file object
+    for (const file of files) {
+      const fetchDownloadCountQuery = 'SELECT download_count FROM files WHERE filename = $1';
+      const downloadCountResult = await pool.query(fetchDownloadCountQuery, [file.filename]);
+      file.downloadCount = downloadCountResult.rows[0].download_count;
+
+      const fetchEmailCountQuery = 'SELECT email_count FROM files WHERE filename = $1';
+      const emailCountResult = await pool.query(fetchEmailCountQuery, [file.filename]);
+      file.emailCount = emailCountResult.rows[0].email_count;
+    }
 
     res.render('admin-dashboard', { files });
   } catch (error) {
-    console.error('Error retrieving data:', error);
-    res.status(500).send('Internal server error');
+    console.error('Error retrieving files:', error);
+    return res.status(500).send('Internal server error');
   }
-  
-  };
+};
+
+
+
+
+
+
+
 exports.requestPd = async (req, res) => {
     res.render("request-resetPd");
   
@@ -360,17 +399,32 @@ exports.checkSession = (req, res, next) => {
           console.error('Error destroying session:', err);
           return res.status(500).send('Internal Server Error');
         }
-        res.redirect('/login'); // Redirect the user to the login page
+        res.redirect('/login');
       });
     } else {
-      // Session identifier matches, proceed to the next middleware or route
-      next();
+      // Session identifier matches, determine the user's role and redirect accordingly
+      const { email } = req.session.user;
+      
+      // Check if the email matches the admin email
+      if (email === 'demoproject369@gmail.com') {
+        // Store the retrieved session information in req.session.user
+        req.session.user = { email, sessionId: req.session.id };
+        // Redirect to the admin dashboard
+        return res.redirect('/admin-dashboard');
+      } else {
+        // Store the retrieved session information in req.session.user
+        req.session.user = { email, sessionId: req.session.id };
+        // Redirect to the user dashboard
+        return res.redirect('/user-dashboard');
+      }
     }
   } else {
     // No session identifier found, user is not logged in
     res.redirect('/login'); // Redirect the user to the login page
   }
-}; 
+};
+
+
 
 exports.logout = (req, res) => {
   if (req.session.user) {
@@ -381,7 +435,7 @@ exports.logout = (req, res) => {
       console.error('Error destroying session:', err);
       return res.status(500).send('Internal Server Error');
     }
-    res.redirect('/login'); // Redirect the user to the login page
+    res.redirect('/login'); 
   });
 };
 

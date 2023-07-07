@@ -30,32 +30,25 @@
 
 
   <h3>Upload File:</h3>
-  <div class="file-container">
-    <div class="card">
-      <!-- Uploaded Files -->
-      <% if (files && files.length > 0) { %>
-          <% files.forEach((file) => { %>
-            <div class="file-item">
-              <h3><%= file.title %></h3>
-              <p>Description: <%= file.description %></p>
-        
-             
-              <div class="counts">
-                <p>Downloads: <%= file.download_count || 0 %></p>
-                <p>Emails: <%= file.email_count || 0 %></p>
-              </div>
-              <a class="download-button" href="/uploads/<%= file.filename %>">Download</a>
-           
-            </div>
-          <% }); %>
-        <% } else { %>
-          <p>No files available.</p>
-        <% } %>
-        
+  <div class="card">
+    <!-- Uploaded Files -->
+    <% if (typeof files !== 'undefined' && files.length > 0) { %>
+      <% files.forEach((file) => { %>
+        <div class="file-item">
+          <h3><%= file.title %></h3>
+          <p>Description: <%= file.description %></p>
+          <div class="counts">
+            <p>Downloads: <%= file.download_count || 0 %></p>
+            <p>Emails: <%= file.email_count || 0 %></p>
+          </div>
+          <a class="download-button" href="/uploads/<%= file.filename %>">Download</a>
         </div>
-        
-            </div>
+      <% }); %>
+    <% } else { %>
+      <p>No files available.</p>
+    <% } %>
   </div>
+  
  
 
      

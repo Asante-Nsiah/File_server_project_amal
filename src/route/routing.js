@@ -11,11 +11,11 @@ router.post('/signup', auth.signup)
 router.get('/login', auth.login) 
 router.post('/login', auth.loginAccount) 
 router.get('/verify', auth.verify) 
-router.get('/logout', auth.checkSession, auth.logout) 
+router.get('/logout',  auth.logout) 
 
 
-router.get('/user-dashboard', auth.dashboardUser) 
-router.get('/admin-dashboard', auth.dashboardAdmin) 
+router.get('/user-dashboard', auth.checkSession, auth.dashboardUser) 
+router.get('/admin-dashboard', auth.checkSession,  auth.dashboardAdmin) 
 
 router.post('/request-resetPd', auth.forgetPassword) 
 router.get('/request-resetPd', auth.requestPd) 

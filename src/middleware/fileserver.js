@@ -29,35 +29,30 @@ exports.uploadFile = async (req, res) => {
 
       try {
         // Store the file information in the database
-        // const query = 'INSERT INTO files (title, description, filename) VALUES ($1, $2, $3) RETURNING *';
-        // const values = [title, description, file.filename];
-        // const result = await pool.query(query, values);
-        // const uploadedFile = result.rows[0];
         const insertQuery = 'INSERT INTO files (title, description, filename) VALUES ($1, $2, $3)';
-const insertValues = [title, description, file.filename];
+        const insertValues = [title, description, file.filename];
 
-// Insert the file
-await pool.query(insertQuery, insertValues);
+        // Insert the file
+        await pool.query(insertQuery, insertValues);
 
-// Retrieve the inserted file and order by a suitable column (e.g., id)
-const selectQuery = 'SELECT * FROM files WHERE filename = $1 ORDER BY id DESC LIMIT 1';
-const selectValues = [file.filename];
-const selectResult = await pool.query(selectQuery, selectValues);
-const uploadedFile = selectResult.rows[0];
+        // Retrieve the inserted file and order by the "id" column in descending order (last uploaded file first)
+        const selectQuery = 'SELECT * FROM files WHERE filename = $1 ORDER BY id DESC LIMIT 1';
+        const selectValues = [file.filename];
+        const selectResult = await pool.query(selectQuery, selectValues);
+        const uploadedFile = selectResult.rows[0];
 
+        // // Fetch the updated download count for the uploaded file
+        // const downloadCountQuery = 'SELECT download_count FROM files WHERE id = $1';
+        // const downloadCountResult = await pool.query(downloadCountQuery, [uploadedFile.id]);
+        // const downloadCount = downloadCountResult.rows[0].download_count;
 
-        // Fetch the updated download count for the uploaded file
-        const downloadCountQuery = 'SELECT download_count FROM files WHERE id = $1';
-        const downloadCountResult = await pool.query(downloadCountQuery, [uploadedFile.id]);
-        const downloadCount = downloadCountResult.rows[0].download_count;
-
-        // Fetch all files from the database
-        const filesQuery = 'SELECT * FROM files';
+        // Fetch all files from the database, ordered by the "id" column in descending order (last uploaded file first)
+        const filesQuery = 'SELECT * FROM files ORDER BY id DESC';
         const filesResult = await pool.query(filesQuery);
         const files = filesResult.rows;
 
         // Render the admin dashboard template with the uploaded file, all files, and the download count
-        res.render('admin-dashboard', { files, uploadedFile, downloadCount });
+        res.render('admin-dashboard', { files, uploadedFile });
       } catch (error) {
         console.error('Error storing file:', error);
         res.status(500).send('Internal server error');
@@ -65,6 +60,12 @@ const uploadedFile = selectResult.rows[0];
     }
   });
 };
+
+
+
+
+
+
 
 
   
@@ -95,16 +96,25 @@ exports.downloadFile = async (req, res) => {
         console.log('File download completed successfully');
 
         // Increment the download count in the database
-        const incrementQuery = 'UPDATE files SET download_count = download_count + 1 WHERE filename = $1 RETURNING download_count';
-        const result = await pool.query(incrementQuery, [filename]);
-        const downloadCount = result.rows[0].download_count;
+        const incrementDownloadCountQuery = 'UPDATE files SET download_count = COALESCE(download_count, 0) + 1 WHERE filename = $1';
+        await pool.query(incrementDownloadCountQuery, [filename]);
 
-        // Update the email count in the database
-        const emailCountQuery = 'UPDATE files SET email_count = COALESCE(email_count, 0) + 1 WHERE filename = $1';
-        await pool.query(emailCountQuery, [filename]);
+        // Fetch the updated download count for the downloaded file
+        const fetchDownloadCountQuery = 'SELECT download_count FROM files WHERE filename = $1';
+        const downloadCountResult = await pool.query(fetchDownloadCountQuery, [filename]);
+        const downloadCount = downloadCountResult.rows[0].download_count;
 
-        // Send the response with the updated download count
-        res.status(200).json({ message: 'File downloaded successfully', downloadCount });
+        // Increment the email count in the database
+        const incrementEmailCountQuery = 'UPDATE files SET email_count = COALESCE(email_count, 0) + 1 WHERE filename = $1';
+        await pool.query(incrementEmailCountQuery, [filename]);
+
+        // Fetch the updated email count for the downloaded file
+        const fetchEmailCountQuery = 'SELECT email_count FROM files WHERE filename = $1';
+        const emailCountResult = await pool.query(fetchEmailCountQuery, [filename]);
+        const emailCount = emailCountResult.rows[0].email_count;
+
+        // Render the download count and email count in the response
+        res.status(200).json({ message: 'File downloaded successfully', downloadCount, emailCount });
       })
       .on('error', (err) => {
         // Handle any errors that occur during the download
@@ -116,8 +126,6 @@ exports.downloadFile = async (req, res) => {
     res.status(500).send('Error downloading file');
   }
 };
-
-
 
 
 
